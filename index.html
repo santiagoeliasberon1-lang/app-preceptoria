@@ -10,6 +10,10 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;color:#1a1a1a;min-height:100vh;}
 .topbar{background:#fff;border-bottom:1px solid #e5e5e0;padding:12px 16px;position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:10px;}
 .topbar h1{font-size:16px;font-weight:600;flex:1;}
+.sync-indicator{font-size:11px;padding:3px 8px;border-radius:10px;font-weight:600;}
+.sync-ok{background:#EAF3DE;color:#3B6D11;}
+.sync-saving{background:#FAEEDA;color:#854F0B;}
+.sync-error{background:#FCEBEB;color:#A32D2D;}
 .app{max-width:600px;margin:0 auto;padding:0 0 80px;}
 .tabs{display:flex;gap:0;background:#fff;border-bottom:1px solid #e5e5e0;position:sticky;top:49px;z-index:99;}
 .tab{flex:1;padding:12px 6px;border:none;background:transparent;cursor:pointer;font-size:13px;color:#888;transition:all .15s;font-family:inherit;border-bottom:2px solid transparent;}
@@ -25,6 +29,7 @@ button:active{transform:scale(0.98);}
 .btn-d{color:#c0392b;border-color:#e0b0ac;}
 .btn-d:hover{background:#fdf0ee;}
 .btn-wa{background:#e8f5e1;color:#2d6a1f;border-color:#7dbb5a;display:inline-flex;align-items:center;gap:5px;padding:5px 10px;font-size:12px;font-weight:600;text-decoration:none;border-radius:8px;border-width:1px;border-style:solid;}
+.btn-wa:hover{background:#C0DD97;}
 .grupo-bar{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
 .gbtn{padding:5px 13px;border-radius:20px;border:1px solid #d5d5d0;font-size:12px;cursor:pointer;background:transparent;color:#888;transition:all .15s;font-family:inherit;}
 .gbn0.active{background:#EEEDFE;color:#3C3489;border-color:#AFA9EC;}
@@ -71,12 +76,14 @@ button:active{transform:scale(0.98);}
 .alumno-list-info{flex:1;min-width:0;}
 .alumno-list-nombre{font-size:14px;font-weight:600;}
 .alumno-list-sub{font-size:12px;color:#888;margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.loading{text-align:center;padding:3rem;color:#aaa;font-size:14px;}
 </style>
 </head>
 <body>
 
 <div class="topbar">
   <h1>📋 App Preceptor</h1>
+  <span class="sync-indicator sync-saving" id="sync-status">Conectando...</span>
 </div>
 
 <div class="app">
@@ -86,7 +93,6 @@ button:active{transform:scale(0.98);}
     <button class="tab" onclick="showTab('historial')">Historial</button>
   </div>
 
-  <!-- ASISTENCIA -->
   <div id="tab-asistencia" class="panel active">
     <div class="date-header">
       <span class="date-lbl" id="fecha-disp"></span>
@@ -94,10 +100,9 @@ button:active{transform:scale(0.98);}
     </div>
     <div class="grupo-bar" id="gbar-asist"></div>
     <div class="stats-row" id="stats-row"></div>
-    <div id="lista-asist"></div>
+    <div id="lista-asist"><div class="loading">Cargando datos...</div></div>
   </div>
 
-  <!-- ALUMNOS -->
   <div id="tab-alumnos" class="panel">
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
       <span style="font-size:16px;font-weight:600;flex:1;">Mis alumnos</span>
@@ -121,18 +126,32 @@ button:active{transform:scale(0.98);}
       </div>
     </div>
     <div class="grupo-bar" id="gbar-alumnos"></div>
-    <div id="lista-alumnos"></div>
+    <div id="lista-alumnos"><div class="loading">Cargando datos...</div></div>
   </div>
 
-  <!-- HISTORIAL -->
   <div id="tab-historial" class="panel">
     <div style="font-size:16px;font-weight:600;margin-bottom:14px;">Historial de registros</div>
     <div class="grupo-bar" id="gbar-hist"></div>
-    <div id="lista-hist"></div>
+    <div id="lista-hist"><div class="loading">Cargando datos...</div></div>
   </div>
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCs-lb3NTQelJ7_kZwGpi2MogN6-8_DMzA",
+  authDomain: "app-preceptor.firebaseapp.com",
+  projectId: "app-preceptor",
+  storageBucket: "app-preceptor.firebasestorage.app",
+  messagingSenderId: "1051918100845",
+  appId: "1:1051918100845:web:fdce7ad55a38b6a11c9264"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
 const GRUPOS=['Grupo 1','Grupo 2','Grupo 3','Grupo 4','Grupo 5'];
 const ESTADOS=[
   {key:'ausente',label:'Falta',cls:'b-ausente',ico:'✗'},
@@ -143,9 +162,69 @@ const ESTADOS=[
 ];
 
 let S={alumnos:[],registros:{},grupoActivo:'todos',fecha:new Date().toISOString().split('T')[0],grupos:GRUPOS.slice(),editId:null};
-try{const s=localStorage.getItem('preceptor_v2');if(s){const p=JSON.parse(s);S={...S,...p};if(!S.grupos||!S.grupos.length)S.grupos=GRUPOS.slice();}}catch(e){}
+let saveTimeout=null;
+let ignorarSnapshot=false;
 
-function save(){try{localStorage.setItem('preceptor_v2',JSON.stringify(S));}catch(e){}}
+function setSyncStatus(status){
+  const el=document.getElementById('sync-status');
+  if(status==='ok'){el.textContent='✓ Sincronizado';el.className='sync-indicator sync-ok';}
+  else if(status==='saving'){el.textContent='Guardando...';el.className='sync-indicator sync-saving';}
+  else if(status==='error'){el.textContent='Sin conexión';el.className='sync-indicator sync-error';}
+  else{el.textContent='Conectando...';el.className='sync-indicator sync-saving';}
+}
+
+async function saveToCloud(){
+  ignorarSnapshot=true;
+  setSyncStatus('saving');
+  try{
+    await setDoc(doc(db,'preceptor','datos'),{
+      alumnos:S.alumnos,
+      registros:S.registros,
+      grupos:S.grupos,
+      updatedAt:new Date().toISOString()
+    });
+    setSyncStatus('ok');
+  }catch(e){
+    setSyncStatus('error');
+    console.error(e);
+  }
+  setTimeout(()=>{ignorarSnapshot=false;},2000);
+}
+
+function save(){
+  if(saveTimeout)clearTimeout(saveTimeout);
+  saveTimeout=setTimeout(saveToCloud,800);
+}
+
+async function loadFromCloud(){
+  try{
+    const snap=await getDoc(doc(db,'preceptor','datos'));
+    if(snap.exists()){
+      const d=snap.data();
+      S.alumnos=d.alumnos||[];
+      S.registros=d.registros||{};
+      S.grupos=d.grupos&&d.grupos.length?d.grupos:GRUPOS.slice();
+    }
+    setSyncStatus('ok');
+  }catch(e){
+    setSyncStatus('error');
+    console.error(e);
+  }
+  renderAll();
+}
+
+onSnapshot(doc(db,'preceptor','datos'),(snap)=>{
+  if(ignorarSnapshot)return;
+  if(snap.exists()){
+    const d=snap.data();
+    S.alumnos=d.alumnos||[];
+    S.registros=d.registros||{};
+    S.grupos=d.grupos&&d.grupos.length?d.grupos:GRUPOS.slice();
+    setSyncStatus('ok');
+    renderAll();
+  }
+},(e)=>{setSyncStatus('error');});
+
 function gi(g){return S.grupos.indexOf(g);}
 function avC(g){const i=gi(g);return i>=0&&i<=4?'av'+i:'av0';}
 function gC(i){return i>=0&&i<=4?'gbn'+i:'gbn5';}
@@ -174,7 +253,7 @@ function waBtnHtml(a,motivo,label){
 
 function initFecha(){document.getElementById('fecha-inp').value=S.fecha;renderFecha();}
 function renderFecha(){const d=new Date(S.fecha+'T12:00:00');document.getElementById('fecha-disp').textContent=d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});}
-function cambiarFecha(v){S.fecha=v;save();renderFecha();renderAsist();}
+window.cambiarFecha=function(v){S.fecha=v;renderFecha();renderAsist();}
 
 function renderGrupoBars(){
   ['gbar-asist','gbar-alumnos','gbar-hist'].forEach(id=>{
@@ -196,7 +275,8 @@ function getAlumnos(){
   return S.grupoActivo==='todos'?S.alumnos:S.alumnos.filter(x=>x.grupo===S.grupoActivo);
 }
 function getEsts(aid,fecha){return S.registros[fecha+'_'+aid]||[];}
-function toggleEst(aid,fecha,key){
+
+window.toggleEst=function(aid,fecha,key){
   const k=fecha+'_'+aid;
   if(!S.registros[k])S.registros[k]=[];
   const idx=S.registros[k].indexOf(key);
@@ -303,15 +383,15 @@ function renderHist(){
 }
 
 let formVis=false;
-function toggleForm(){
+window.toggleForm=function(){
   formVis=!formVis;
   document.getElementById('form-alumno').style.display=formVis?'block':'none';
   if(formVis){limpiarForm();S.editId=null;document.getElementById('form-lbl').textContent='Nuevo alumno';document.getElementById('btn-guardar').textContent='Guardar';}
 }
-function cancelarForm(){formVis=false;document.getElementById('form-alumno').style.display='none';S.editId=null;}
+window.cancelarForm=function(){formVis=false;document.getElementById('form-alumno').style.display='none';S.editId=null;}
 function limpiarForm(){['i-nombre','i-tutor','i-tel'].forEach(id=>document.getElementById(id).value='');document.getElementById('i-grupo').value='';}
 
-function guardarAlumno(){
+window.guardarAlumno=function(){
   const nombre=document.getElementById('i-nombre').value.trim();
   const grupo=document.getElementById('i-grupo').value;
   if(!nombre){alert('El nombre es obligatorio');return;}
@@ -326,7 +406,7 @@ function guardarAlumno(){
   save();cancelarForm();renderAll();
 }
 
-function editAlumno(id){
+window.editAlumno=function(id){
   const a=S.alumnos.find(x=>x.id===id);if(!a)return;
   S.editId=id;formVis=true;
   document.getElementById('form-alumno').style.display='block';
@@ -339,7 +419,7 @@ function editAlumno(id){
   window.scrollTo(0,0);
 }
 
-function delAlumno(id){
+window.delAlumno=function(id){
   if(!confirm('¿Eliminar este alumno? Se borrarán también sus registros.'))return;
   S.alumnos=S.alumnos.filter(a=>a.id!==id);
   Object.keys(S.registros).forEach(k=>{if(k.includes('_'+id))delete S.registros[k];});
@@ -347,7 +427,7 @@ function delAlumno(id){
 }
 
 function renderAll(){renderGrupoBars();renderAsist();renderAlumnos();renderHist();}
-function showTab(t){
+window.showTab=function(t){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   ['asistencia','alumnos','historial'].forEach((x,i)=>{
@@ -356,7 +436,8 @@ function showTab(t){
   renderAll();
 }
 
-initFecha();renderAll();
+initFecha();
+loadFromCloud();
 </script>
 </body>
 </html>
