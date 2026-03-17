@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#ffffff">
+<title>App Preceptor</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;color:#1a1a1a;min-height:100vh;}
+.topbar{background:#fff;border-bottom:1px solid #e5e5e0;padding:12px 16px;position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:10px;}
+.topbar h1{font-size:16px;font-weight:600;flex:1;}
+.app{max-width:600px;margin:0 auto;padding:0 0 80px;}
+.tabs{display:flex;gap:0;background:#fff;border-bottom:1px solid #e5e5e0;position:sticky;top:49px;z-index:99;}
+.tab{flex:1;padding:12px 6px;border:none;background:transparent;cursor:pointer;font-size:13px;color:#888;transition:all .15s;font-family:inherit;border-bottom:2px solid transparent;}
+.tab.active{color:#1a1a1a;font-weight:600;border-bottom:2px solid #1a1a1a;}
+.panel{display:none;padding:16px;}.panel.active{display:block;}
+.card{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:14px 16px;margin-bottom:12px;}
+input,select{font-family:inherit;font-size:14px;color:#1a1a1a;background:#fff;border:1px solid #d5d5d0;border-radius:8px;padding:8px 10px;outline:none;width:100%;}
+input:focus,select:focus{border-color:#888;}
+button{font-family:inherit;font-size:13px;cursor:pointer;border-radius:8px;padding:8px 14px;border:1px solid #d5d5d0;background:transparent;color:#1a1a1a;transition:all .15s;}
+button:hover{background:#f0f0eb;}
+button:active{transform:scale(0.98);}
+.btn-p{background:#f0f0eb;border-color:#c5c5c0;font-weight:600;}
+.btn-d{color:#c0392b;border-color:#e0b0ac;}
+.btn-d:hover{background:#fdf0ee;}
+.btn-wa{background:#e8f5e1;color:#2d6a1f;border-color:#7dbb5a;display:inline-flex;align-items:center;gap:5px;padding:5px 10px;font-size:12px;font-weight:600;text-decoration:none;border-radius:8px;border-width:1px;border-style:solid;}
+.grupo-bar{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+.gbtn{padding:5px 13px;border-radius:20px;border:1px solid #d5d5d0;font-size:12px;cursor:pointer;background:transparent;color:#888;transition:all .15s;font-family:inherit;}
+.gbn0.active{background:#EEEDFE;color:#3C3489;border-color:#AFA9EC;}
+.gbn1.active{background:#E1F5EE;color:#085041;border-color:#5DCAA5;}
+.gbn2.active{background:#FAEEDA;color:#633806;border-color:#EF9F27;}
+.gbn3.active{background:#FAECE7;color:#712B13;border-color:#F0997B;}
+.gbn4.active{background:#E6F1FB;color:#0C447C;border-color:#85B7EB;}
+.gbn5.active{background:#f0f0eb;color:#1a1a1a;border-color:#c5c5c0;font-weight:600;}
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px;}
+.stat-card{background:#fff;border:1px solid #e5e5e0;border-radius:8px;padding:8px 6px;text-align:center;}
+.stat-num{font-size:20px;font-weight:600;}
+.stat-lbl{font-size:9px;color:#888;margin-top:1px;}
+.alumno-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0eb;}
+.alumno-row:last-child{border-bottom:none;}
+.avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;margin-top:2px;}
+.av0{background:#EEEDFE;color:#3C3489;}.av1{background:#E1F5EE;color:#085041;}.av2{background:#FAEEDA;color:#633806;}.av3{background:#FAECE7;color:#712B13;}.av4{background:#E6F1FB;color:#0C447C;}
+.alumno-main{flex:1;min-width:0;}
+.nombre{font-size:14px;font-weight:600;}
+.tutor-line{font-size:12px;color:#888;margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.badges{display:flex;gap:3px;flex-wrap:wrap;margin-top:6px;}
+.badge{font-size:11px;padding:4px 9px;border-radius:8px;cursor:pointer;border:none;transition:all .15s;font-family:inherit;font-weight:600;white-space:nowrap;}
+.badge-off{background:#f0f0eb;color:#888;}
+.b-ausente{background:#FCEBEB;color:#A32D2D;}
+.b-retiro{background:#FAEEDA;color:#854F0B;}
+.b-certificado{background:#EAF3DE;color:#3B6D11;}
+.b-legajo{background:#FAECE7;color:#993C1D;}
+.b-tarde{background:#E6F1FB;color:#185FA5;}
+.empty{text-align:center;padding:2.5rem;color:#aaa;font-size:14px;line-height:1.7;}
+.inline-form{background:#f9f9f5;border:1px solid #e5e5e0;border-radius:12px;padding:14px;margin-bottom:14px;}
+.lbl{font-size:12px;color:#888;display:block;margin-bottom:4px;}
+.date-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.date-lbl{font-size:16px;font-weight:600;flex:1;}
+.hist-row{padding:7px 0;border-bottom:1px solid #f0f0eb;font-size:13px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.hist-row:last-child{border-bottom:none;}
+.grup-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.gd0{background:#7F77DD;}.gd1{background:#1D9E75;}.gd2{background:#EF9F27;}.gd3{background:#D85A30;}.gd4{background:#378ADD;}
+.gnb{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;}
+.gb0{background:#EEEDFE;color:#3C3489;}.gb1{background:#E1F5EE;color:#085041;}.gb2{background:#FAEEDA;color:#633806;}.gb3{background:#FAECE7;color:#712B13;}.gb4{background:#E6F1FB;color:#0C447C;}
+.group-header{display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-top:1px solid #f0f0eb;margin-top:4px;}
+.group-header:first-child{border-top:none;margin-top:0;}
+.hist-date{font-size:12px;color:#888;margin-bottom:8px;font-weight:600;}
+.alumno-list-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0eb;}
+.alumno-list-row:last-child{border-bottom:none;}
+.alumno-list-info{flex:1;min-width:0;}
+.alumno-list-nombre{font-size:14px;font-weight:600;}
+.alumno-list-sub{font-size:12px;color:#888;margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>📋 App Preceptor</h1>
+</div>
+
+<div class="app">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('asistencia')">Asistencia</button>
+    <button class="tab" onclick="showTab('alumnos')">Alumnos</button>
+    <button class="tab" onclick="showTab('historial')">Historial</button>
+  </div>
+
+  <!-- ASISTENCIA -->
+  <div id="tab-asistencia" class="panel active">
+    <div class="date-header">
+      <span class="date-lbl" id="fecha-disp"></span>
+      <input type="date" id="fecha-inp" onchange="cambiarFecha(this.value)" style="width:auto;font-size:13px;">
+    </div>
+    <div class="grupo-bar" id="gbar-asist"></div>
+    <div class="stats-row" id="stats-row"></div>
+    <div id="lista-asist"></div>
+  </div>
+
+  <!-- ALUMNOS -->
+  <div id="tab-alumnos" class="panel">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
+      <span style="font-size:16px;font-weight:600;flex:1;">Mis alumnos</span>
+      <button class="btn-p" onclick="toggleForm()">+ Agregar</button>
+    </div>
+    <div id="form-alumno" style="display:none;" class="inline-form">
+      <p style="font-size:12px;color:#888;font-weight:600;margin-bottom:10px;" id="form-lbl">Nuevo alumno</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div style="grid-column:1/-1;"><label class="lbl">Nombre del alumno *</label><input id="i-nombre" placeholder="Ej: García, Ana"></div>
+        <div><label class="lbl">Grupo *</label><select id="i-grupo"><option value="">Seleccioná un grupo</option></select></div>
+        <div><label class="lbl">Nombre del tutor/a</label><input id="i-tutor" placeholder="Ej: García, Carlos"></div>
+        <div style="grid-column:1/-1;">
+          <label class="lbl">Teléfono del tutor (WhatsApp)</label>
+          <input id="i-tel" placeholder="Ej: 5493760123456" type="tel">
+          <span style="font-size:11px;color:#aaa;margin-top:3px;display:block;">Argentina: 549 + cód. de área sin 0 + número sin 15</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn-p" onclick="guardarAlumno()" id="btn-guardar">Guardar</button>
+        <button onclick="cancelarForm()">Cancelar</button>
+      </div>
+    </div>
+    <div class="grupo-bar" id="gbar-alumnos"></div>
+    <div id="lista-alumnos"></div>
+  </div>
+
+  <!-- HISTORIAL -->
+  <div id="tab-historial" class="panel">
+    <div style="font-size:16px;font-weight:600;margin-bottom:14px;">Historial de registros</div>
+    <div class="grupo-bar" id="gbar-hist"></div>
+    <div id="lista-hist"></div>
+  </div>
+</div>
+
+<script>
+const GRUPOS=['Grupo 1','Grupo 2','Grupo 3','Grupo 4','Grupo 5'];
+const ESTADOS=[
+  {key:'ausente',label:'Falta',cls:'b-ausente',ico:'✗'},
+  {key:'retiro',label:'Se retiró',cls:'b-retiro',ico:'↩'},
+  {key:'certificado',label:'Certificado',cls:'b-certificado',ico:'✓'},
+  {key:'legajo',label:'Debe legajo',cls:'b-legajo',ico:'!'},
+  {key:'tarde',label:'Llegó tarde',cls:'b-tarde',ico:'◑'},
+];
+
+let S={alumnos:[],registros:{},grupoActivo:'todos',fecha:new Date().toISOString().split('T')[0],grupos:GRUPOS.slice(),editId:null};
+try{const s=localStorage.getItem('preceptor_v2');if(s){const p=JSON.parse(s);S={...S,...p};if(!S.grupos||!S.grupos.length)S.grupos=GRUPOS.slice();}}catch(e){}
+
+function save(){try{localStorage.setItem('preceptor_v2',JSON.stringify(S));}catch(e){}}
+function gi(g){return S.grupos.indexOf(g);}
+function avC(g){const i=gi(g);return i>=0&&i<=4?'av'+i:'av0';}
+function gC(i){return i>=0&&i<=4?'gbn'+i:'gbn5';}
+function gbC(i){return i>=0&&i<=4?'gb'+i:'gb0';}
+function gdC(i){return i>=0&&i<=4?'gd'+i:'';}
+function limTel(t){return(t||'').replace(/\D/g,'');}
+
+function waLink(a,motivo){
+  const tel=limTel(a.tel);if(!tel)return null;
+  const hoy=new Date(S.fecha+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+  const tn=a.tutor?(' '+a.tutor.split(',')[0]):'';
+  let msg='';
+  if(motivo==='ausente')msg=`Hola${tn}! Le escribimos desde la escuela. ${a.nombre} no asistió el día ${hoy}. ¿Podría comunicarnos el motivo? Gracias.`;
+  else if(motivo==='retiro')msg=`Hola${tn}! Le informamos que ${a.nombre} se retiró antes del horario el día ${hoy}.`;
+  else if(motivo==='legajo')msg=`Hola${tn}! Le recordamos que ${a.nombre} tiene documentación pendiente en el legajo escolar. Por favor, acérquese a la institución. Gracias.`;
+  else msg=`Hola${tn}! Le escribimos desde la escuela respecto a ${a.nombre}.`;
+  return`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`;
+}
+
+const waIconSVG=`<svg width="14" height="14" viewBox="0 0 24 24" fill="#2d6a1f"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.112 1.523 5.836L.057 23.882a.5.5 0 0 0 .611.611l6.046-1.466A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.8 9.8 0 0 1-4.992-1.365l-.357-.212-3.706.899.916-3.606-.232-.372A9.795 9.795 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>`;
+
+function waBtnHtml(a,motivo,label){
+  const link=waLink(a,motivo);if(!link)return'';
+  return`<a href="${link}" target="_blank" class="btn-wa">${waIconSVG}${label}</a>`;
+}
+
+function initFecha(){document.getElementById('fecha-inp').value=S.fecha;renderFecha();}
+function renderFecha(){const d=new Date(S.fecha+'T12:00:00');document.getElementById('fecha-disp').textContent=d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});}
+function cambiarFecha(v){S.fecha=v;save();renderFecha();renderAsist();}
+
+function renderGrupoBars(){
+  ['gbar-asist','gbar-alumnos','gbar-hist'].forEach(id=>{
+    const el=document.getElementById(id);el.innerHTML='';
+    const all=document.createElement('button');
+    all.className='gbn5 gbtn'+(S.grupoActivo==='todos'?' active':'');
+    all.textContent='Todos';all.onclick=()=>{S.grupoActivo='todos';renderAll();};el.appendChild(all);
+    S.grupos.forEach((g,i)=>{
+      const b=document.createElement('button');
+      b.className='gbtn '+gC(i)+(S.grupoActivo===g?' active':'');
+      b.textContent=g;b.onclick=()=>{S.grupoActivo=g;renderAll();};el.appendChild(b);
+    });
+  });
+  const sel=document.getElementById('i-grupo');
+  if(sel){sel.innerHTML='<option value="">Seleccioná un grupo</option>';S.grupos.forEach(g=>{const o=document.createElement('option');o.value=g;o.textContent=g;sel.appendChild(o);});}
+}
+
+function getAlumnos(){
+  return S.grupoActivo==='todos'?S.alumnos:S.alumnos.filter(x=>x.grupo===S.grupoActivo);
+}
+function getEsts(aid,fecha){return S.registros[fecha+'_'+aid]||[];}
+function toggleEst(aid,fecha,key){
+  const k=fecha+'_'+aid;
+  if(!S.registros[k])S.registros[k]=[];
+  const idx=S.registros[k].indexOf(key);
+  if(idx>=0)S.registros[k].splice(idx,1);else S.registros[k].push(key);
+  save();renderAsist();
+}
+
+function alumnoAsistRow(a,fecha){
+  const ests=getEsts(a.id,fecha);
+  const ini=a.nombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const gidx=gi(a.grupo);
+  const badges=ESTADOS.map(e=>`<button class="badge ${ests.includes(e.key)?e.cls:'badge-off'}" onclick="toggleEst('${a.id}','${fecha}','${e.key}')">${e.ico} ${e.label}</button>`).join('');
+  const tieneWA=limTel(a.tel).length>0;
+  let waBtns='';
+  if(tieneWA){
+    if(ests.includes('ausente'))waBtns+=waBtnHtml(a,'ausente','Avisar falta');
+    if(ests.includes('legajo'))waBtns+=waBtnHtml(a,'legajo','Recordar legajo');
+    if(ests.includes('retiro'))waBtns+=waBtnHtml(a,'retiro','Avisar retiro');
+    if(!ests.length)waBtns+=waBtnHtml(a,'general','WhatsApp');
+  }
+  const tutorInfo=(a.tutor||a.tel)?`<div class="tutor-line">${a.tutor?`<span>Tutor: ${a.tutor}</span>`:''}${a.tel?`<span>${limTel(a.tel)}</span>`:''}</div>`:'';
+  return`<div class="alumno-row">
+    <div class="avatar av${gidx>=0&&gidx<=4?gidx:0}">${ini}</div>
+    <div class="alumno-main">
+      <div class="nombre">${a.nombre}</div>
+      ${tutorInfo}
+      <div class="badges">${badges}${waBtns}</div>
+    </div>
+  </div>`;
+}
+
+function renderAsist(){
+  const alumnos=getAlumnos();const fecha=S.fecha;
+  const stats={ausente:0,retiro:0,certificado:0,legajo:0,tarde:0};
+  alumnos.forEach(a=>{const e=getEsts(a.id,fecha);ESTADOS.forEach(est=>{if(e.includes(est.key))stats[est.key]++;});});
+  const colores=['#c0392b','#854F0B','#3B6D11','#993C1D','#185FA5'];
+  document.getElementById('stats-row').innerHTML=ESTADOS.map((e,i)=>`<div class="stat-card"><div class="stat-num" style="color:${colores[i]}">${stats[e.key]}</div><div class="stat-lbl">${e.label}</div></div>`).join('');
+  const cont=document.getElementById('lista-asist');
+  if(!alumnos.length){cont.innerHTML='<div class="empty">No hay alumnos cargados.<br>Andá a la pestaña <b>Alumnos</b> para agregar.</div>';return;}
+  if(S.grupoActivo==='todos'){
+    let html='';
+    S.grupos.forEach((g,gidx)=>{
+      const ga=alumnos.filter(a=>a.grupo===g);if(!ga.length)return;
+      html+=`<div class="group-header"><div class="grup-dot ${gdC(gidx)}"></div><span class="gnb ${gbC(gidx)}">${g}</span></div>`;
+      html+=`<div class="card" style="margin-top:4px;">${ga.map(a=>alumnoAsistRow(a,fecha)).join('')}</div>`;
+    });
+    cont.innerHTML=html||'<div class="empty">No hay alumnos.</div>';
+  } else {
+    cont.innerHTML=`<div class="card">${alumnos.map(a=>alumnoAsistRow(a,fecha)).join('')}</div>`;
+  }
+}
+
+function renderAlumnos(){
+  const alumnos=getAlumnos();const cont=document.getElementById('lista-alumnos');
+  if(!alumnos.length){cont.innerHTML='<div class="empty">No hay alumnos en este grupo.</div>';return;}
+  const rowFn=a=>`<div class="alumno-list-row">
+    <div class="avatar ${avC(a.grupo)}">${a.nombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
+    <div class="alumno-list-info">
+      <div class="alumno-list-nombre">${a.nombre}</div>
+      <div class="alumno-list-sub">
+        <span class="gnb ${gbC(gi(a.grupo))}">${a.grupo}</span>
+        ${a.tutor?`<span>Tutor: ${a.tutor}</span>`:''}
+        ${a.tel?waBtnHtml(a,'general','WhatsApp'):''}
+      </div>
+    </div>
+    <div style="display:flex;gap:5px;flex-shrink:0;">
+      <button onclick="editAlumno('${a.id}')" style="font-size:11px;padding:4px 8px;">Editar</button>
+      <button class="btn-d" onclick="delAlumno('${a.id}')" style="font-size:11px;padding:4px 8px;">Eliminar</button>
+    </div>
+  </div>`;
+  if(S.grupoActivo==='todos'){
+    let html='';
+    S.grupos.forEach((g,gidx)=>{
+      const ga=alumnos.filter(a=>a.grupo===g);if(!ga.length)return;
+      html+=`<div class="group-header"><div class="grup-dot ${gdC(gidx)}"></div><span class="gnb ${gbC(gidx)}">${g}</span><span style="font-size:12px;color:#aaa;">${ga.length} alumnos</span></div>`;
+      html+=`<div class="card" style="margin-top:4px;">${ga.map(rowFn).join('')}</div>`;
+    });
+    cont.innerHTML=html;
+  } else {
+    cont.innerHTML=`<div class="card">${alumnos.map(rowFn).join('')}</div>`;
+  }
+}
+
+function renderHist(){
+  const cont=document.getElementById('lista-hist');
+  const alumnos=getAlumnos();const ids=new Set(alumnos.map(a=>a.id));
+  const fechas=[...new Set(Object.keys(S.registros).map(k=>k.split('_')[0]))].sort().reverse();
+  if(!fechas.length){cont.innerHTML='<div class="empty">No hay registros todavía.</div>';return;}
+  let html='';
+  fechas.forEach(f=>{
+    const entradas=Object.entries(S.registros).filter(([k,v])=>k.startsWith(f+'_')&&v.length>0&&ids.has(k.split('_')[1]));
+    if(!entradas.length)return;
+    const dl=new Date(f+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+    const rows=entradas.map(([k,ests])=>{
+      const aid=k.split('_')[1];const a=S.alumnos.find(x=>x.id===aid);if(!a)return'';
+      const gidx=gi(a.grupo);
+      const bs=ests.map(e=>{const est=ESTADOS.find(x=>x.key===e);return est?`<span class="badge ${est.cls}">${est.ico} ${est.label}</span>`:''}).join('');
+      return`<div class="hist-row"><div class="grup-dot ${gdC(gidx)}"></div><span style="font-weight:600;">${a.nombre}</span><span class="gnb ${gbC(gidx)}" style="font-size:10px;">${a.grupo}</span>${bs}</div>`;
+    }).filter(Boolean).join('');
+    if(!rows)return;
+    html+=`<div class="card"><div class="hist-date">${dl}</div>${rows}</div>`;
+  });
+  cont.innerHTML=html||'<div class="empty">Sin registros para este grupo.</div>';
+}
+
+let formVis=false;
+function toggleForm(){
+  formVis=!formVis;
+  document.getElementById('form-alumno').style.display=formVis?'block':'none';
+  if(formVis){limpiarForm();S.editId=null;document.getElementById('form-lbl').textContent='Nuevo alumno';document.getElementById('btn-guardar').textContent='Guardar';}
+}
+function cancelarForm(){formVis=false;document.getElementById('form-alumno').style.display='none';S.editId=null;}
+function limpiarForm(){['i-nombre','i-tutor','i-tel'].forEach(id=>document.getElementById(id).value='');document.getElementById('i-grupo').value='';}
+
+function guardarAlumno(){
+  const nombre=document.getElementById('i-nombre').value.trim();
+  const grupo=document.getElementById('i-grupo').value;
+  if(!nombre){alert('El nombre es obligatorio');return;}
+  if(!grupo){alert('Seleccioná un grupo');return;}
+  const obj={nombre,grupo,tutor:document.getElementById('i-tutor').value.trim(),tel:limTel(document.getElementById('i-tel').value)};
+  if(S.editId){
+    const idx=S.alumnos.findIndex(a=>a.id===S.editId);
+    if(idx>=0)S.alumnos[idx]={...S.alumnos[idx],...obj};
+  } else {
+    S.alumnos.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),...obj});
+  }
+  save();cancelarForm();renderAll();
+}
+
+function editAlumno(id){
+  const a=S.alumnos.find(x=>x.id===id);if(!a)return;
+  S.editId=id;formVis=true;
+  document.getElementById('form-alumno').style.display='block';
+  document.getElementById('i-nombre').value=a.nombre||'';
+  document.getElementById('i-grupo').value=a.grupo||'';
+  document.getElementById('i-tutor').value=a.tutor||'';
+  document.getElementById('i-tel').value=a.tel||'';
+  document.getElementById('form-lbl').textContent='Editar alumno';
+  document.getElementById('btn-guardar').textContent='Actualizar';
+  window.scrollTo(0,0);
+}
+
+function delAlumno(id){
+  if(!confirm('¿Eliminar este alumno? Se borrarán también sus registros.'))return;
+  S.alumnos=S.alumnos.filter(a=>a.id!==id);
+  Object.keys(S.registros).forEach(k=>{if(k.includes('_'+id))delete S.registros[k];});
+  save();renderAll();
+}
+
+function renderAll(){renderGrupoBars();renderAsist();renderAlumnos();renderHist();}
+function showTab(t){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  ['asistencia','alumnos','historial'].forEach((x,i)=>{
+    if(x===t){document.querySelectorAll('.tab')[i].classList.add('active');document.getElementById('tab-'+x).classList.add('active');}
+  });
+  renderAll();
+}
+
+initFecha();renderAll();
+</script>
+</body>
+</html>
