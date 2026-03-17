@@ -16,12 +16,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .sync-error{background:#FCEBEB;color:#A32D2D;}
 .app{max-width:600px;margin:0 auto;padding:0 0 80px;}
 .tabs{display:flex;gap:0;background:#fff;border-bottom:1px solid #e5e5e0;position:sticky;top:49px;z-index:99;}
-.tab{flex:1;padding:12px 6px;border:none;background:transparent;cursor:pointer;font-size:13px;color:#888;transition:all .15s;font-family:inherit;border-bottom:2px solid transparent;}
+.tab{flex:1;padding:12px 4px;border:none;background:transparent;cursor:pointer;font-size:12px;color:#888;transition:all .15s;font-family:inherit;border-bottom:2px solid transparent;}
 .tab.active{color:#1a1a1a;font-weight:600;border-bottom:2px solid #1a1a1a;}
 .panel{display:none;padding:16px;}.panel.active{display:block;}
 .card{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:14px 16px;margin-bottom:12px;}
-input,select{font-family:inherit;font-size:14px;color:#1a1a1a;background:#fff;border:1px solid #d5d5d0;border-radius:8px;padding:8px 10px;outline:none;width:100%;}
-input:focus,select:focus{border-color:#888;}
+input,select,textarea{font-family:inherit;font-size:14px;color:#1a1a1a;background:#fff;border:1px solid #d5d5d0;border-radius:8px;padding:8px 10px;outline:none;width:100%;}
+textarea{resize:vertical;min-height:70px;}
+input:focus,select:focus,textarea:focus{border-color:#888;}
 button{font-family:inherit;font-size:13px;cursor:pointer;border-radius:8px;padding:8px 14px;border:1px solid #d5d5d0;background:transparent;color:#1a1a1a;transition:all .15s;}
 button:hover{background:#f0f0eb;}
 button:active{transform:scale(0.98);}
@@ -77,6 +78,29 @@ button:active{transform:scale(0.98);}
 .alumno-list-nombre{font-size:14px;font-weight:600;}
 .alumno-list-sub{font-size:12px;color:#888;margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .loading{text-align:center;padding:3rem;color:#aaa;font-size:14px;}
+
+/* PERFIL */
+.perfil-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:200;overflow-y:auto;}
+.perfil-overlay.open{display:block;}
+.perfil-sheet{background:#fff;border-radius:16px 16px 0 0;margin-top:48px;min-height:calc(100vh - 48px);padding:0 0 40px;}
+.perfil-header{display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid #f0f0eb;position:sticky;top:0;background:#fff;z-index:10;border-radius:16px 16px 0 0;}
+.perfil-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;}
+.perfil-info{flex:1;min-width:0;}
+.perfil-nombre{font-size:15px;font-weight:700;}
+.perfil-grupo{font-size:12px;color:#888;}
+.perfil-body{padding:16px;}
+.perfil-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+.perfil-stat{background:#f9f9f5;border-radius:10px;padding:10px 8px;text-align:center;}
+.perfil-stat-num{font-size:22px;font-weight:700;}
+.perfil-stat-lbl{font-size:10px;color:#888;margin-top:2px;}
+.perfil-section-title{font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px;}
+.perfil-hist-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f5f5f0;flex-wrap:wrap;}
+.perfil-hist-item:last-child{border-bottom:none;}
+.perfil-hist-fecha{font-size:12px;color:#888;min-width:110px;}
+.nota-item{background:#f9f9f5;border-radius:8px;padding:10px 12px;margin-bottom:8px;}
+.nota-texto{font-size:13px;line-height:1.5;}
+.nota-fecha{font-size:11px;color:#aaa;margin-top:4px;}
+.nota-form{display:flex;gap:8px;align-items:flex-start;margin-top:8px;}
 </style>
 </head>
 <body>
@@ -93,6 +117,7 @@ button:active{transform:scale(0.98);}
     <button class="tab" onclick="showTab('historial')">Historial</button>
   </div>
 
+  <!-- ASISTENCIA -->
   <div id="tab-asistencia" class="panel active">
     <div class="date-header">
       <span class="date-lbl" id="fecha-disp"></span>
@@ -103,6 +128,7 @@ button:active{transform:scale(0.98);}
     <div id="lista-asist"><div class="loading">Cargando datos...</div></div>
   </div>
 
+  <!-- ALUMNOS -->
   <div id="tab-alumnos" class="panel">
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
       <span style="font-size:16px;font-weight:600;flex:1;">Mis alumnos</span>
@@ -129,10 +155,26 @@ button:active{transform:scale(0.98);}
     <div id="lista-alumnos"><div class="loading">Cargando datos...</div></div>
   </div>
 
+  <!-- HISTORIAL -->
   <div id="tab-historial" class="panel">
     <div style="font-size:16px;font-weight:600;margin-bottom:14px;">Historial de registros</div>
     <div class="grupo-bar" id="gbar-hist"></div>
     <div id="lista-hist"><div class="loading">Cargando datos...</div></div>
+  </div>
+</div>
+
+<!-- PERFIL ALUMNO -->
+<div class="perfil-overlay" id="perfil-overlay" onclick="cerrarPerfil(event)">
+  <div class="perfil-sheet" id="perfil-sheet">
+    <div class="perfil-header">
+      <div class="perfil-avatar" id="p-avatar"></div>
+      <div class="perfil-info">
+        <div class="perfil-nombre" id="p-nombre"></div>
+        <div class="perfil-grupo" id="p-grupo"></div>
+      </div>
+      <button onclick="closePerfil()" style="font-size:20px;border:none;background:none;color:#888;padding:4px 8px;">✕</button>
+    </div>
+    <div class="perfil-body" id="perfil-body"></div>
   </div>
 </div>
 
@@ -161,7 +203,7 @@ const ESTADOS=[
   {key:'tarde',label:'Llegó tarde',cls:'b-tarde',ico:'◑'},
 ];
 
-let S={alumnos:[],registros:{},grupoActivo:'todos',fecha:new Date().toISOString().split('T')[0],grupos:GRUPOS.slice(),editId:null};
+let S={alumnos:[],registros:{},notas:{},grupoActivo:'todos',fecha:new Date().toISOString().split('T')[0],grupos:GRUPOS.slice(),editId:null};
 let saveTimeout=null;
 let ignorarSnapshot=false;
 
@@ -178,16 +220,11 @@ async function saveToCloud(){
   setSyncStatus('saving');
   try{
     await setDoc(doc(db,'preceptor','datos'),{
-      alumnos:S.alumnos,
-      registros:S.registros,
-      grupos:S.grupos,
-      updatedAt:new Date().toISOString()
+      alumnos:S.alumnos,registros:S.registros,notas:S.notas||{},
+      grupos:S.grupos,updatedAt:new Date().toISOString()
     });
     setSyncStatus('ok');
-  }catch(e){
-    setSyncStatus('error');
-    console.error(e);
-  }
+  }catch(e){setSyncStatus('error');console.error(e);}
   setTimeout(()=>{ignorarSnapshot=false;},2000);
 }
 
@@ -201,15 +238,11 @@ async function loadFromCloud(){
     const snap=await getDoc(doc(db,'preceptor','datos'));
     if(snap.exists()){
       const d=snap.data();
-      S.alumnos=d.alumnos||[];
-      S.registros=d.registros||{};
-      S.grupos=d.grupos&&d.grupos.length?d.grupos:GRUPOS.slice();
+      S.alumnos=d.alumnos||[];S.registros=d.registros||{};
+      S.notas=d.notas||{};S.grupos=d.grupos&&d.grupos.length?d.grupos:GRUPOS.slice();
     }
     setSyncStatus('ok');
-  }catch(e){
-    setSyncStatus('error');
-    console.error(e);
-  }
+  }catch(e){setSyncStatus('error');console.error(e);}
   renderAll();
 }
 
@@ -217,11 +250,9 @@ onSnapshot(doc(db,'preceptor','datos'),(snap)=>{
   if(ignorarSnapshot)return;
   if(snap.exists()){
     const d=snap.data();
-    S.alumnos=d.alumnos||[];
-    S.registros=d.registros||{};
-    S.grupos=d.grupos&&d.grupos.length?d.grupos:GRUPOS.slice();
-    setSyncStatus('ok');
-    renderAll();
+    S.alumnos=d.alumnos||[];S.registros=d.registros||{};
+    S.notas=d.notas||{};S.grupos=d.grupos&&d.grupos.length?d.grupos:GRUPOS.slice();
+    setSyncStatus('ok');renderAll();
   }
 },(e)=>{setSyncStatus('error');});
 
@@ -271,9 +302,7 @@ function renderGrupoBars(){
   if(sel){sel.innerHTML='<option value="">Seleccioná un grupo</option>';S.grupos.forEach(g=>{const o=document.createElement('option');o.value=g;o.textContent=g;sel.appendChild(o);});}
 }
 
-function getAlumnos(){
-  return S.grupoActivo==='todos'?S.alumnos:S.alumnos.filter(x=>x.grupo===S.grupoActivo);
-}
+function getAlumnos(){return S.grupoActivo==='todos'?S.alumnos:S.alumnos.filter(x=>x.grupo===S.grupoActivo);}
 function getEsts(aid,fecha){return S.registros[fecha+'_'+aid]||[];}
 
 window.toggleEst=function(aid,fecha,key){
@@ -299,9 +328,9 @@ function alumnoAsistRow(a,fecha){
   }
   const tutorInfo=(a.tutor||a.tel)?`<div class="tutor-line">${a.tutor?`<span>Tutor: ${a.tutor}</span>`:''}${a.tel?`<span>${limTel(a.tel)}</span>`:''}</div>`:'';
   return`<div class="alumno-row">
-    <div class="avatar av${gidx>=0&&gidx<=4?gidx:0}">${ini}</div>
+    <div class="avatar av${gidx>=0&&gidx<=4?gidx:0}" style="cursor:pointer;" onclick="abrirPerfil('${a.id}')">${ini}</div>
     <div class="alumno-main">
-      <div class="nombre">${a.nombre}</div>
+      <div class="nombre" style="cursor:pointer;" onclick="abrirPerfil('${a.id}')">${a.nombre}</div>
       ${tutorInfo}
       <div class="badges">${badges}${waBtns}</div>
     </div>
@@ -333,8 +362,8 @@ function renderAlumnos(){
   const alumnos=getAlumnos();const cont=document.getElementById('lista-alumnos');
   if(!alumnos.length){cont.innerHTML='<div class="empty">No hay alumnos en este grupo.</div>';return;}
   const rowFn=a=>`<div class="alumno-list-row">
-    <div class="avatar ${avC(a.grupo)}">${a.nombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
-    <div class="alumno-list-info">
+    <div class="avatar ${avC(a.grupo)}" style="cursor:pointer;" onclick="abrirPerfil('${a.id}')">${a.nombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
+    <div class="alumno-list-info" style="cursor:pointer;" onclick="abrirPerfil('${a.id}')">
       <div class="alumno-list-nombre">${a.nombre}</div>
       <div class="alumno-list-sub">
         <span class="gnb ${gbC(gi(a.grupo))}">${a.grupo}</span>
@@ -374,12 +403,112 @@ function renderHist(){
       const aid=k.split('_')[1];const a=S.alumnos.find(x=>x.id===aid);if(!a)return'';
       const gidx=gi(a.grupo);
       const bs=ests.map(e=>{const est=ESTADOS.find(x=>x.key===e);return est?`<span class="badge ${est.cls}">${est.ico} ${est.label}</span>`:''}).join('');
-      return`<div class="hist-row"><div class="grup-dot ${gdC(gidx)}"></div><span style="font-weight:600;">${a.nombre}</span><span class="gnb ${gbC(gidx)}" style="font-size:10px;">${a.grupo}</span>${bs}</div>`;
+      return`<div class="hist-row"><div class="grup-dot ${gdC(gidx)}"></div><span style="font-weight:600;cursor:pointer;" onclick="abrirPerfil('${a.id}')">${a.nombre}</span><span class="gnb ${gbC(gidx)}" style="font-size:10px;">${a.grupo}</span>${bs}</div>`;
     }).filter(Boolean).join('');
     if(!rows)return;
     html+=`<div class="card"><div class="hist-date">${dl}</div>${rows}</div>`;
   });
   cont.innerHTML=html||'<div class="empty">Sin registros para este grupo.</div>';
+}
+
+// ---- PERFIL ----
+window.abrirPerfil=function(id){
+  const a=S.alumnos.find(x=>x.id===id);if(!a)return;
+  const gidx=gi(a.grupo);
+  const ini=a.nombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const avEl=document.getElementById('p-avatar');
+  avEl.textContent=ini;
+  avEl.className='perfil-avatar av'+(gidx>=0&&gidx<=4?gidx:0);
+  document.getElementById('p-nombre').textContent=a.nombre;
+  document.getElementById('p-grupo').textContent=(a.grupo||'')+(a.tutor?' · Tutor: '+a.tutor:'');
+
+  // calcular stats
+  const counts={ausente:0,retiro:0,certificado:0,legajo:0,tarde:0};
+  const histFechas=[];
+  Object.entries(S.registros).forEach(([k,v])=>{
+    if(!k.includes('_'+id))return;
+    if(!v||!v.length)return;
+    const f=k.split('_')[0];
+    histFechas.push({fecha:f,estados:v});
+    v.forEach(e=>{if(counts[e]!==undefined)counts[e]++;});
+  });
+  histFechas.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const totalInasist=counts.ausente;
+
+  const colores={ausente:'#c0392b',retiro:'#854F0B',certificado:'#3B6D11',legajo:'#993C1D',tarde:'#185FA5'};
+
+  const statsHtml=`
+    <div class="perfil-stats">
+      <div class="perfil-stat"><div class="perfil-stat-num" style="color:#c0392b">${counts.ausente}</div><div class="perfil-stat-lbl">Faltas</div></div>
+      <div class="perfil-stat"><div class="perfil-stat-num" style="color:#854F0B">${counts.retiro}</div><div class="perfil-stat-lbl">Retiros</div></div>
+      <div class="perfil-stat"><div class="perfil-stat-num" style="color:#185FA5">${counts.tarde}</div><div class="perfil-stat-lbl">Tardanzas</div></div>
+      <div class="perfil-stat"><div class="perfil-stat-num" style="color:#3B6D11">${counts.certificado}</div><div class="perfil-stat-lbl">Certificados</div></div>
+      <div class="perfil-stat"><div class="perfil-stat-num" style="color:#993C1D">${counts.legajo}</div><div class="perfil-stat-lbl">Legajos</div></div>
+      <div class="perfil-stat"><div class="perfil-stat-num">${histFechas.length}</div><div class="perfil-stat-lbl">Días con registro</div></div>
+    </div>
+    <div style="background:#FCEBEB;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
+      <span style="font-size:22px;font-weight:700;color:#c0392b;">${totalInasist}</span>
+      <span style="font-size:13px;color:#A32D2D;">inasistencias totales en el año</span>
+    </div>`;
+
+  const histHtml=histFechas.length?histFechas.map(({fecha,estados})=>{
+    const dl=new Date(fecha+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
+    const bs=estados.map(e=>{const est=ESTADOS.find(x=>x.key===e);return est?`<span class="badge ${est.cls}">${est.ico} ${est.label}</span>`:''}).join('');
+    return`<div class="perfil-hist-item"><span class="perfil-hist-fecha">${dl}</span>${bs}</div>`;
+  }).join(''):'<div style="color:#aaa;font-size:13px;padding:8px 0;">Sin registros todavía.</div>';
+
+  // notas
+  const notasAlumno=(S.notas&&S.notas[id])||[];
+  const notasHtml=notasAlumno.length?notasAlumno.slice().reverse().map((n,i)=>`
+    <div class="nota-item">
+      <div style="display:flex;align-items:flex-start;gap:8px;">
+        <div class="nota-texto" style="flex:1;">${n.texto}</div>
+        <button class="btn-d" onclick="eliminarNota('${id}',${notasAlumno.length-1-i})" style="font-size:11px;padding:2px 7px;flex-shrink:0;">✕</button>
+      </div>
+      <div class="nota-fecha">${new Date(n.fecha).toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'})}</div>
+    </div>`).join(''):'<div style="color:#aaa;font-size:13px;padding:4px 0;">Sin observaciones todavía.</div>';
+
+  document.getElementById('perfil-body').innerHTML=`
+    ${statsHtml}
+    <div class="perfil-section-title">Historial de registros</div>
+    <div class="card" style="padding:8px 16px;">${histHtml}</div>
+    <div class="perfil-section-title">Observaciones / notas</div>
+    ${notasHtml}
+    <div class="nota-form">
+      <textarea id="nota-input-${id}" placeholder="Agregar una observación..." style="font-size:13px;"></textarea>
+      <button class="btn-p" onclick="agregarNota('${id}')" style="flex-shrink:0;">Agregar</button>
+    </div>`;
+
+  document.getElementById('perfil-overlay').classList.add('open');
+  document.getElementById('perfil-overlay').scrollTop=0;
+  window._perfilId=id;
+}
+
+window.cerrarPerfil=function(e){
+  if(e&&e.target!==document.getElementById('perfil-overlay'))return;
+  closePerfil();
+}
+window.closePerfil=function(){
+  document.getElementById('perfil-overlay').classList.remove('open');
+  window._perfilId=null;
+}
+
+window.agregarNota=function(id){
+  const inp=document.getElementById('nota-input-'+id);
+  const texto=(inp&&inp.value||'').trim();
+  if(!texto)return;
+  if(!S.notas)S.notas={};
+  if(!S.notas[id])S.notas[id]=[];
+  S.notas[id].push({texto,fecha:new Date().toISOString()});
+  save();
+  abrirPerfil(id);
+}
+
+window.eliminarNota=function(id,idx){
+  if(!confirm('¿Eliminar esta observación?'))return;
+  if(S.notas&&S.notas[id])S.notas[id].splice(idx,1);
+  save();
+  abrirPerfil(id);
 }
 
 let formVis=false;
@@ -423,6 +552,7 @@ window.delAlumno=function(id){
   if(!confirm('¿Eliminar este alumno? Se borrarán también sus registros.'))return;
   S.alumnos=S.alumnos.filter(a=>a.id!==id);
   Object.keys(S.registros).forEach(k=>{if(k.includes('_'+id))delete S.registros[k];});
+  if(S.notas&&S.notas[id])delete S.notas[id];
   save();renderAll();
 }
 
