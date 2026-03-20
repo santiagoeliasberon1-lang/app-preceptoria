@@ -301,7 +301,10 @@ async function loadFromCloud(){
     if(snap.exists()){
       const d=snap.data();
       S.alumnos=d.alumnos||[];S.registros=d.registros||{};
-      S.notas=d.notas||{};S.grupos=d.grupos&&d.grupos.length?d.grupos:GRUPOS.slice();
+      S.notas=d.notas||{};
+      // Siempre usar el array más largo entre el guardado y el default
+      const gGuardados=d.grupos&&d.grupos.length?d.grupos:[];
+      S.grupos=gGuardados.length>=GRUPOS.length?gGuardados:GRUPOS.slice();
     }
     setSyncStatus('ok');
   }catch(e){setSyncStatus('error');}
@@ -313,7 +316,9 @@ onSnapshot(doc(db,'preceptor','datos'),(snap)=>{
   if(snap.exists()){
     const d=snap.data();
     S.alumnos=d.alumnos||[];S.registros=d.registros||{};
-    S.notas=d.notas||{};S.grupos=d.grupos&&d.grupos.length?d.grupos:GRUPOS.slice();
+    S.notas=d.notas||{};
+    const gGuardados2=d.grupos&&d.grupos.length?d.grupos:[];
+    S.grupos=gGuardados2.length>=GRUPOS.length?gGuardados2:GRUPOS.slice();
     setSyncStatus('ok');renderAll();
   }
 },(e)=>{setSyncStatus('error');});
