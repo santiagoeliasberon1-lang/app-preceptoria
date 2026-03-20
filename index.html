@@ -31,6 +31,8 @@ button:active{transform:scale(0.98);}
 .btn-d:hover{background:#fdf0ee;}
 .btn-wa{background:#e8f5e1;color:#2d6a1f;border-color:#7dbb5a;display:inline-flex;align-items:center;gap:5px;padding:5px 10px;font-size:12px;font-weight:600;text-decoration:none;border-radius:8px;border-width:1px;border-style:solid;}
 .btn-wa:hover{background:#C0DD97;}
+.btn-green{background:#EAF3DE;color:#3B6D11;border-color:#97C459;font-weight:600;}
+.btn-green:hover{background:#C0DD97;}
 .grupo-bar{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
 .gbtn{padding:5px 13px;border-radius:20px;border:1px solid #d5d5d0;font-size:12px;cursor:pointer;background:transparent;color:#888;transition:all .15s;font-family:inherit;}
 .gbn0.active{background:#EEEDFE;color:#3C3489;border-color:#AFA9EC;}
@@ -78,8 +80,20 @@ button:active{transform:scale(0.98);}
 .alumno-list-nombre{font-size:14px;font-weight:600;}
 .alumno-list-sub{font-size:12px;color:#888;margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .loading{text-align:center;padding:3rem;color:#aaa;font-size:14px;}
-
-/* PERFIL */
+.import-box{border:2px dashed #d5d5d0;border-radius:12px;padding:20px;text-align:center;margin-bottom:14px;cursor:pointer;transition:all .15s;}
+.import-box:hover{border-color:#888;background:#f9f9f5;}
+.import-box.dragging{border-color:#3B6D11;background:#EAF3DE;}
+.import-title{font-size:14px;font-weight:600;margin-bottom:4px;}
+.import-sub{font-size:12px;color:#888;}
+.preview-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
+.preview-table th{background:#f0f0eb;padding:6px 8px;text-align:left;font-weight:600;border-bottom:1px solid #e0e0e0;}
+.preview-table td{padding:6px 8px;border-bottom:1px solid #f0f0eb;}
+.preview-table tr:last-child td{border-bottom:none;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:300;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border-radius:16px;padding:20px;max-width:500px;width:100%;max-height:80vh;overflow-y:auto;}
+.modal h2{font-size:16px;font-weight:700;margin-bottom:4px;}
+.modal-sub{font-size:13px;color:#888;margin-bottom:14px;}
 .perfil-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:200;overflow-y:auto;}
 .perfil-overlay.open{display:block;}
 .perfil-sheet{background:#fff;border-radius:16px 16px 0 0;margin-top:48px;min-height:calc(100vh - 48px);padding:0 0 40px;}
@@ -130,8 +144,9 @@ button:active{transform:scale(0.98);}
 
   <!-- ALUMNOS -->
   <div id="tab-alumnos" class="panel">
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
       <span style="font-size:16px;font-weight:600;flex:1;">Mis alumnos</span>
+      <button class="btn-green" onclick="abrirImport()">⬆ Importar Excel</button>
       <button class="btn-p" onclick="toggleForm()">+ Agregar</button>
     </div>
     <div id="form-alumno" style="display:none;" class="inline-form">
@@ -163,6 +178,29 @@ button:active{transform:scale(0.98);}
   </div>
 </div>
 
+<!-- MODAL IMPORTAR -->
+<div class="modal-overlay" id="modal-import">
+  <div class="modal">
+    <h2>Importar alumnos desde Excel</h2>
+    <p class="modal-sub">El archivo debe tener las columnas: <b>nombre</b>, <b>grupo</b>, <b>tutor</b>, <b>telefono</b> (en la primera fila).</p>
+    <div class="import-box" id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <div class="import-title">📂 Tocar para seleccionar archivo</div>
+      <div class="import-sub">O arrastrá el archivo acá · Solo .xlsx</div>
+      <input type="file" id="file-input" accept=".xlsx" style="display:none;" onchange="leerExcel(this.files[0])">
+    </div>
+    <div id="preview-container" style="display:none;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px;" id="preview-title"></div>
+      <div style="overflow-x:auto;"><table class="preview-table" id="preview-table"></table></div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+        <select id="import-grupo-sel" style="flex:1;min-width:150px;"></select>
+        <button class="btn-green" onclick="confirmarImport()" id="btn-confirmar-import">Importar</button>
+        <button onclick="cerrarImport()">Cancelar</button>
+      </div>
+      <p style="font-size:11px;color:#854F0B;margin-top:8px;">Los alumnos que ya existen en el grupo no se duplicarán.</p>
+    </div>
+  </div>
+</div>
+
 <!-- PERFIL ALUMNO -->
 <div class="perfil-overlay" id="perfil-overlay" onclick="cerrarPerfil(event)">
   <div class="perfil-sheet" id="perfil-sheet">
@@ -178,6 +216,7 @@ button:active{transform:scale(0.98);}
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -206,6 +245,7 @@ const ESTADOS=[
 let S={alumnos:[],registros:{},notas:{},grupoActivo:'todos',fecha:new Date().toISOString().split('T')[0],grupos:GRUPOS.slice(),editId:null};
 let saveTimeout=null;
 let ignorarSnapshot=false;
+let importData=[];
 
 function setSyncStatus(status){
   const el=document.getElementById('sync-status');
@@ -216,8 +256,7 @@ function setSyncStatus(status){
 }
 
 async function saveToCloud(){
-  ignorarSnapshot=true;
-  setSyncStatus('saving');
+  ignorarSnapshot=true;setSyncStatus('saving');
   try{
     await setDoc(doc(db,'preceptor','datos'),{
       alumnos:S.alumnos,registros:S.registros,notas:S.notas||{},
@@ -242,7 +281,7 @@ async function loadFromCloud(){
       S.notas=d.notas||{};S.grupos=d.grupos&&d.grupos.length?d.grupos:GRUPOS.slice();
     }
     setSyncStatus('ok');
-  }catch(e){setSyncStatus('error');console.error(e);}
+  }catch(e){setSyncStatus('error');}
   renderAll();
 }
 
@@ -262,6 +301,107 @@ function gC(i){return i>=0&&i<=4?'gbn'+i:'gbn5';}
 function gbC(i){return i>=0&&i<=4?'gb'+i:'gb0';}
 function gdC(i){return i>=0&&i<=4?'gd'+i:'';}
 function limTel(t){return(t||'').replace(/\D/g,'');}
+
+// ---- IMPORTAR EXCEL ----
+window.abrirImport=function(){
+  document.getElementById('modal-import').classList.add('open');
+  document.getElementById('preview-container').style.display='none';
+  document.getElementById('file-input').value='';
+  importData=[];
+  // poblar select de grupos
+  const sel=document.getElementById('import-grupo-sel');
+  sel.innerHTML='<option value="">— Asignar grupo desde archivo —</option>';
+  S.grupos.forEach(g=>{const o=document.createElement('option');o.value=g;o.textContent=g;sel.appendChild(o);});
+}
+
+window.cerrarImport=function(){
+  document.getElementById('modal-import').classList.remove('open');
+  importData=[];
+}
+
+window.leerExcel=function(file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      if(!rows.length){alert('El archivo está vacío.');return;}
+
+      // normalizar claves (minúsculas, sin tildes)
+      const norm=s=>(s||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+      const findKey=(obj,posibles)=>{
+        const keys=Object.keys(obj);
+        for(const p of posibles){const k=keys.find(k=>norm(k)===p);if(k)return k;}
+        return null;
+      };
+
+      const sample=rows[0];
+      const kNombre=findKey(sample,['nombre','nombre del alumno','alumno','apellido y nombre','apellido nombre']);
+      const kGrupo=findKey(sample,['grupo','curso','division','division','seccion']);
+      const kTutor=findKey(sample,['tutor','nombre del tutor','tutor/a','nombre tutor','responsable']);
+      const kTel=findKey(sample,['telefono','teléfono','tel','celular','whatsapp','telefono del tutor']);
+
+      if(!kNombre){alert('No se encontró la columna "nombre" en el archivo.\n\nAsegurate de que la primera fila tenga el encabezado "nombre".');return;}
+
+      importData=rows.map(r=>({
+        nombre:(r[kNombre]||'').toString().trim(),
+        grupo:kGrupo?(r[kGrupo]||'').toString().trim():'',
+        tutor:kTutor?(r[kTutor]||'').toString().trim():'',
+        tel:limTel(kTel?(r[kTel]||'').toString():''),
+      })).filter(r=>r.nombre);
+
+      if(!importData.length){alert('No se encontraron alumnos válidos en el archivo.');return;}
+
+      // preview
+      const cols=[{k:'nombre',l:'Nombre'},{k:'grupo',l:'Grupo'},{k:'tutor',l:'Tutor'},{k:'tel',l:'Teléfono'}];
+      const preview=importData.slice(0,5);
+      document.getElementById('preview-title').textContent=`${importData.length} alumnos encontrados — Vista previa:`;
+      document.getElementById('preview-table').innerHTML=
+        `<tr>${cols.map(c=>`<th>${c.l}</th>`).join('')}</tr>`+
+        preview.map(r=>`<tr>${cols.map(c=>`<td>${r[c.k]||'—'}</td>`).join('')}</tr>`).join('')+
+        (importData.length>5?`<tr><td colspan="4" style="color:#aaa;font-style:italic;">... y ${importData.length-5} más</td></tr>`:'');
+      document.getElementById('preview-container').style.display='block';
+    }catch(err){alert('Error al leer el archivo. Asegurate de que sea un .xlsx válido.');console.error(err);}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+window.confirmarImport=function(){
+  if(!importData.length)return;
+  const grupoForzado=document.getElementById('import-grupo-sel').value;
+  let agregados=0,duplicados=0;
+
+  importData.forEach(r=>{
+    const grupoFinal=grupoForzado||(r.grupo&&S.grupos.includes(r.grupo)?r.grupo:S.grupos[0]);
+    const yaExiste=S.alumnos.some(a=>
+      a.nombre.toLowerCase()===r.nombre.toLowerCase()&&a.grupo===grupoFinal
+    );
+    if(yaExiste){duplicados++;return;}
+    S.alumnos.push({
+      id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+      nombre:r.nombre,grupo:grupoFinal,tutor:r.tutor,tel:r.tel
+    });
+    agregados++;
+  });
+
+  save();renderAll();cerrarImport();
+  alert(`✓ Importación completada\n${agregados} alumnos agregados${duplicados?`\n${duplicados} duplicados ignorados`:''}`)
+}
+
+// drag and drop
+document.addEventListener('DOMContentLoaded',()=>{
+  const dz=document.getElementById('drop-zone');
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragging');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('dragging'));
+  dz.addEventListener('drop',e=>{
+    e.preventDefault();dz.classList.remove('dragging');
+    const f=e.dataTransfer.files[0];
+    if(f&&f.name.endsWith('.xlsx'))leerExcel(f);
+    else alert('Solo se aceptan archivos .xlsx');
+  });
+});
 
 function waLink(a,motivo){
   const tel=limTel(a.tel);if(!tel)return null;
@@ -360,7 +500,7 @@ function renderAsist(){
 
 function renderAlumnos(){
   const alumnos=getAlumnos();const cont=document.getElementById('lista-alumnos');
-  if(!alumnos.length){cont.innerHTML='<div class="empty">No hay alumnos en este grupo.</div>';return;}
+  if(!alumnos.length){cont.innerHTML='<div class="empty">No hay alumnos en este grupo.<br>Usá <b>Importar Excel</b> para cargar la lista.</div>';return;}
   const rowFn=a=>`<div class="alumno-list-row">
     <div class="avatar ${avC(a.grupo)}" style="cursor:pointer;" onclick="abrirPerfil('${a.id}')">${a.nombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
     <div class="alumno-list-info" style="cursor:pointer;" onclick="abrirPerfil('${a.id}')">
@@ -411,32 +551,22 @@ function renderHist(){
   cont.innerHTML=html||'<div class="empty">Sin registros para este grupo.</div>';
 }
 
-// ---- PERFIL ----
 window.abrirPerfil=function(id){
   const a=S.alumnos.find(x=>x.id===id);if(!a)return;
   const gidx=gi(a.grupo);
   const ini=a.nombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   const avEl=document.getElementById('p-avatar');
-  avEl.textContent=ini;
-  avEl.className='perfil-avatar av'+(gidx>=0&&gidx<=4?gidx:0);
+  avEl.textContent=ini;avEl.className='perfil-avatar av'+(gidx>=0&&gidx<=4?gidx:0);
   document.getElementById('p-nombre').textContent=a.nombre;
   document.getElementById('p-grupo').textContent=(a.grupo||'')+(a.tutor?' · Tutor: '+a.tutor:'');
-
-  // calcular stats
   const counts={ausente:0,retiro:0,certificado:0,legajo:0,tarde:0};
   const histFechas=[];
   Object.entries(S.registros).forEach(([k,v])=>{
-    if(!k.includes('_'+id))return;
-    if(!v||!v.length)return;
-    const f=k.split('_')[0];
-    histFechas.push({fecha:f,estados:v});
+    if(!k.includes('_'+id)||!v||!v.length)return;
+    const f=k.split('_')[0];histFechas.push({fecha:f,estados:v});
     v.forEach(e=>{if(counts[e]!==undefined)counts[e]++;});
   });
   histFechas.sort((a,b)=>b.fecha.localeCompare(a.fecha));
-  const totalInasist=counts.ausente;
-
-  const colores={ausente:'#c0392b',retiro:'#854F0B',certificado:'#3B6D11',legajo:'#993C1D',tarde:'#185FA5'};
-
   const statsHtml=`
     <div class="perfil-stats">
       <div class="perfil-stat"><div class="perfil-stat-num" style="color:#c0392b">${counts.ausente}</div><div class="perfil-stat-lbl">Faltas</div></div>
@@ -447,17 +577,14 @@ window.abrirPerfil=function(id){
       <div class="perfil-stat"><div class="perfil-stat-num">${histFechas.length}</div><div class="perfil-stat-lbl">Días con registro</div></div>
     </div>
     <div style="background:#FCEBEB;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
-      <span style="font-size:22px;font-weight:700;color:#c0392b;">${totalInasist}</span>
+      <span style="font-size:22px;font-weight:700;color:#c0392b;">${counts.ausente}</span>
       <span style="font-size:13px;color:#A32D2D;">inasistencias totales en el año</span>
     </div>`;
-
   const histHtml=histFechas.length?histFechas.map(({fecha,estados})=>{
     const dl=new Date(fecha+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
     const bs=estados.map(e=>{const est=ESTADOS.find(x=>x.key===e);return est?`<span class="badge ${est.cls}">${est.ico} ${est.label}</span>`:''}).join('');
     return`<div class="perfil-hist-item"><span class="perfil-hist-fecha">${dl}</span>${bs}</div>`;
   }).join(''):'<div style="color:#aaa;font-size:13px;padding:8px 0;">Sin registros todavía.</div>';
-
-  // notas
   const notasAlumno=(S.notas&&S.notas[id])||[];
   const notasHtml=notasAlumno.length?notasAlumno.slice().reverse().map((n,i)=>`
     <div class="nota-item">
@@ -467,7 +594,6 @@ window.abrirPerfil=function(id){
       </div>
       <div class="nota-fecha">${new Date(n.fecha).toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'})}</div>
     </div>`).join(''):'<div style="color:#aaa;font-size:13px;padding:4px 0;">Sin observaciones todavía.</div>';
-
   document.getElementById('perfil-body').innerHTML=`
     ${statsHtml}
     <div class="perfil-section-title">Historial de registros</div>
@@ -478,37 +604,26 @@ window.abrirPerfil=function(id){
       <textarea id="nota-input-${id}" placeholder="Agregar una observación..." style="font-size:13px;"></textarea>
       <button class="btn-p" onclick="agregarNota('${id}')" style="flex-shrink:0;">Agregar</button>
     </div>`;
-
   document.getElementById('perfil-overlay').classList.add('open');
   document.getElementById('perfil-overlay').scrollTop=0;
   window._perfilId=id;
 }
 
-window.cerrarPerfil=function(e){
-  if(e&&e.target!==document.getElementById('perfil-overlay'))return;
-  closePerfil();
-}
-window.closePerfil=function(){
-  document.getElementById('perfil-overlay').classList.remove('open');
-  window._perfilId=null;
-}
+window.cerrarPerfil=function(e){if(e&&e.target!==document.getElementById('perfil-overlay'))return;closePerfil();}
+window.closePerfil=function(){document.getElementById('perfil-overlay').classList.remove('open');window._perfilId=null;}
 
 window.agregarNota=function(id){
   const inp=document.getElementById('nota-input-'+id);
-  const texto=(inp&&inp.value||'').trim();
-  if(!texto)return;
-  if(!S.notas)S.notas={};
-  if(!S.notas[id])S.notas[id]=[];
+  const texto=(inp&&inp.value||'').trim();if(!texto)return;
+  if(!S.notas)S.notas={};if(!S.notas[id])S.notas[id]=[];
   S.notas[id].push({texto,fecha:new Date().toISOString()});
-  save();
-  abrirPerfil(id);
+  save();abrirPerfil(id);
 }
 
 window.eliminarNota=function(id,idx){
   if(!confirm('¿Eliminar esta observación?'))return;
   if(S.notas&&S.notas[id])S.notas[id].splice(idx,1);
-  save();
-  abrirPerfil(id);
+  save();abrirPerfil(id);
 }
 
 let formVis=false;
@@ -566,8 +681,7 @@ window.showTab=function(t){
   renderAll();
 }
 
-initFecha();
-loadFromCloud();
+initFecha();loadFromCloud();
 </script>
 </body>
 </html>
