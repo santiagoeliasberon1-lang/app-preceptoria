@@ -40,7 +40,10 @@ button:active{transform:scale(0.98);}
 .gbn2.active{background:#FAEEDA;color:#633806;border-color:#EF9F27;}
 .gbn3.active{background:#FAECE7;color:#712B13;border-color:#F0997B;}
 .gbn4.active{background:#E6F1FB;color:#0C447C;border-color:#85B7EB;}
-.gbn5.active{background:#f0f0eb;color:#1a1a1a;border-color:#c5c5c0;font-weight:600;}
+.gbn5.active{background:#FBEAF0;color:#72243E;border-color:#ED93B1;}
+.gbn6.active{background:#EAF3DE;color:#27500A;border-color:#97C459;}
+.gbn7.active{background:#F1EFE8;color:#444441;border-color:#B4B2A9;}
+.gbn8.active{background:#f0f0eb;color:#1a1a1a;border-color:#c5c5c0;font-weight:600;}
 .stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px;}
 .stat-card{background:#fff;border:1px solid #e5e5e0;border-radius:8px;padding:8px 6px;text-align:center;}
 .stat-num{font-size:20px;font-weight:600;}
@@ -48,7 +51,7 @@ button:active{transform:scale(0.98);}
 .alumno-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0eb;}
 .alumno-row:last-child{border-bottom:none;}
 .avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;margin-top:2px;}
-.av0{background:#EEEDFE;color:#3C3489;}.av1{background:#E1F5EE;color:#085041;}.av2{background:#FAEEDA;color:#633806;}.av3{background:#FAECE7;color:#712B13;}.av4{background:#E6F1FB;color:#0C447C;}
+.av0{background:#EEEDFE;color:#3C3489;}.av1{background:#E1F5EE;color:#085041;}.av2{background:#FAEEDA;color:#633806;}.av3{background:#FAECE7;color:#712B13;}.av4{background:#E6F1FB;color:#0C447C;}.av5{background:#FBEAF0;color:#72243E;}.av6{background:#EAF3DE;color:#27500A;}.av7{background:#F1EFE8;color:#444441;}
 .alumno-main{flex:1;min-width:0;}
 .nombre{font-size:14px;font-weight:600;}
 .tutor-line{font-size:12px;color:#888;margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
@@ -68,9 +71,9 @@ button:active{transform:scale(0.98);}
 .hist-row{padding:7px 0;border-bottom:1px solid #f0f0eb;font-size:13px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
 .hist-row:last-child{border-bottom:none;}
 .grup-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.gd0{background:#7F77DD;}.gd1{background:#1D9E75;}.gd2{background:#EF9F27;}.gd3{background:#D85A30;}.gd4{background:#378ADD;}
+.gd0{background:#7F77DD;}.gd1{background:#1D9E75;}.gd2{background:#EF9F27;}.gd3{background:#D85A30;}.gd4{background:#378ADD;}.gd5{background:#D4537E;}.gd6{background:#639922;}.gd7{background:#888780;}
 .gnb{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;}
-.gb0{background:#EEEDFE;color:#3C3489;}.gb1{background:#E1F5EE;color:#085041;}.gb2{background:#FAEEDA;color:#633806;}.gb3{background:#FAECE7;color:#712B13;}.gb4{background:#E6F1FB;color:#0C447C;}
+.gb0{background:#EEEDFE;color:#3C3489;}.gb1{background:#E1F5EE;color:#085041;}.gb2{background:#FAEEDA;color:#633806;}.gb3{background:#FAECE7;color:#712B13;}.gb4{background:#E6F1FB;color:#0C447C;}.gb5{background:#FBEAF0;color:#72243E;}.gb6{background:#EAF3DE;color:#27500A;}.gb7{background:#F1EFE8;color:#444441;}
 .group-header{display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-top:1px solid #f0f0eb;margin-top:4px;}
 .group-header:first-child{border-top:none;margin-top:0;}
 .hist-date{font-size:12px;color:#888;margin-bottom:8px;font-weight:600;}
@@ -233,7 +236,7 @@ const firebaseConfig = {
 const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
 
-const GRUPOS=['Grupo 1','Grupo 2','Grupo 3','Grupo 4','Grupo 5'];
+const GRUPOS=['Grupo 1','Grupo 2','Grupo 3','Grupo 4','Grupo 5','Grupo 6','Grupo 7','Grupo 8'];
 const ESTADOS=[
   {key:'ausente',label:'Falta',cls:'b-ausente',ico:'✗'},
   {key:'retiro',label:'Se retiró',cls:'b-retiro',ico:'↩'},
@@ -296,10 +299,10 @@ onSnapshot(doc(db,'preceptor','datos'),(snap)=>{
 },(e)=>{setSyncStatus('error');});
 
 function gi(g){return S.grupos.indexOf(g);}
-function avC(g){const i=gi(g);return i>=0&&i<=4?'av'+i:'av0';}
-function gC(i){return i>=0&&i<=4?'gbn'+i:'gbn5';}
-function gbC(i){return i>=0&&i<=4?'gb'+i:'gb0';}
-function gdC(i){return i>=0&&i<=4?'gd'+i:'';}
+function avC(g){const i=gi(g);return i>=0&&i<=7?'av'+i:'av0';}
+function gC(i){return i>=0&&i<=7?'gbn'+i:'gbn8';}
+function gbC(i){return i>=0&&i<=7?'gb'+i:'gb0';}
+function gdC(i){return i>=0&&i<=7?'gd'+i:'';}
 function limTel(t){return(t||'').replace(/\D/g,'');}
 
 // ---- IMPORTAR EXCEL ----
@@ -468,7 +471,7 @@ function alumnoAsistRow(a,fecha){
   }
   const tutorInfo=(a.tutor||a.tel)?`<div class="tutor-line">${a.tutor?`<span>Tutor: ${a.tutor}</span>`:''}${a.tel?`<span>${limTel(a.tel)}</span>`:''}</div>`:'';
   return`<div class="alumno-row">
-    <div class="avatar av${gidx>=0&&gidx<=4?gidx:0}" style="cursor:pointer;" onclick="abrirPerfil('${a.id}')">${ini}</div>
+    <div class="avatar av${gidx>=0&&gidx<=7?gidx:0}" style="cursor:pointer;" onclick="abrirPerfil('${a.id}')">${ini}</div>
     <div class="alumno-main">
       <div class="nombre" style="cursor:pointer;" onclick="abrirPerfil('${a.id}')">${a.nombre}</div>
       ${tutorInfo}
@@ -556,7 +559,7 @@ window.abrirPerfil=function(id){
   const gidx=gi(a.grupo);
   const ini=a.nombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   const avEl=document.getElementById('p-avatar');
-  avEl.textContent=ini;avEl.className='perfil-avatar av'+(gidx>=0&&gidx<=4?gidx:0);
+  avEl.textContent=ini;avEl.className='perfil-avatar av'+(gidx>=0&&gidx<=7?gidx:0);
   document.getElementById('p-nombre').textContent=a.nombre;
   document.getElementById('p-grupo').textContent=(a.grupo||'')+(a.tutor?' · Tutor: '+a.tutor:'');
   const counts={ausente:0,retiro:0,certificado:0,legajo:0,tarde:0};
