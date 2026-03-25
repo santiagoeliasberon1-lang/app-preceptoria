@@ -304,22 +304,20 @@ async function loadFromCloud(){
       const d=snap.data();
       S.alumnos=d.alumnos||[];S.registros=d.registros||{};
       S.notas=d.notas||{};
-      const gGuardados=d.grupos&&d.grupos.length?d.grupos:[];
-      S.grupos=gGuardados.length>=GRUPOS.length?gGuardados:GRUPOS.slice();
-      // Si los nombres guardados no coinciden con los nuevos, forzar actualización
-      const nombresViejos=gGuardados.join(',');
-      const nombresNuevos=GRUPOS.join(',');
-      if(nombresViejos!==nombresNuevos){
-        S.grupos=GRUPOS.slice();
-        // Migrar alumnos: mapear nombre viejo → nombre nuevo por posición
-        const mapaGrupos={};
-        gGuardados.forEach((g,i)=>{if(GRUPOS[i])mapaGrupos[g]=GRUPOS[i];});
-        S.alumnos=S.alumnos.map(a=>({
-          ...a,
-          grupo:mapaGrupos[a.grupo]||a.grupo
-        }));
-        saveToCloud();
-      }
+      S.grupos=GRUPOS.slice();
+
+      // Migrar alumnos con grupos viejos automáticamente
+      const mapaGrupos={
+        'Grupo 1':'1ro 1ra','Grupo 2':'1ro 2da','Grupo 3':'2do 1ra',
+        'Grupo 4':'2do 2da','Grupo 5':'3ro 1ra','Grupo 6':'4to 1ra',
+        'Grupo 7':'5to 1ra','Grupo 8':'6to 1ra'
+      };
+      let necesitaMigrar=false;
+      S.alumnos=S.alumnos.map(a=>{
+        if(mapaGrupos[a.grupo]){necesitaMigrar=true;return{...a,grupo:mapaGrupos[a.grupo]};}
+        return a;
+      });
+      if(necesitaMigrar)await saveToCloud();
     }
     setSyncStatus('ok');
   }catch(e){setSyncStatus('error');}
