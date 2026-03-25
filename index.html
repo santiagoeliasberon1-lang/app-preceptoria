@@ -311,6 +311,13 @@ async function loadFromCloud(){
       const nombresNuevos=GRUPOS.join(',');
       if(nombresViejos!==nombresNuevos){
         S.grupos=GRUPOS.slice();
+        // Migrar alumnos: mapear nombre viejo → nombre nuevo por posición
+        const mapaGrupos={};
+        gGuardados.forEach((g,i)=>{if(GRUPOS[i])mapaGrupos[g]=GRUPOS[i];});
+        S.alumnos=S.alumnos.map(a=>({
+          ...a,
+          grupo:mapaGrupos[a.grupo]||a.grupo
+        }));
         saveToCloud();
       }
     }
