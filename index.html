@@ -44,7 +44,7 @@ button:active{transform:scale(0.98);}
 .gbn6.active{background:#EAF3DE;color:#27500A;border-color:#97C459;}
 .gbn7.active{background:#F1EFE8;color:#444441;border-color:#B4B2A9;}
 .gbn8.active{background:#f0f0eb;color:#1a1a1a;border-color:#c5c5c0;font-weight:600;}
-.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px;}
+.stats-row{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:14px;}
 .stat-card{background:#fff;border:1px solid #e5e5e0;border-radius:8px;padding:8px 6px;text-align:center;}
 .stat-num{font-size:20px;font-weight:600;}
 .stat-lbl{font-size:9px;color:#888;margin-top:1px;}
@@ -59,6 +59,7 @@ button:active{transform:scale(0.98);}
 .badge{font-size:11px;padding:4px 9px;border-radius:8px;cursor:pointer;border:none;transition:all .15s;font-family:inherit;font-weight:600;white-space:nowrap;}
 .badge-off{background:#f0f0eb;color:#888;}
 .b-ausente{background:#FCEBEB;color:#A32D2D;}
+.b-ausente-aviso{background:#FBEAF0;color:#72243E;}
 .b-retiro{background:#FAEEDA;color:#854F0B;}
 .b-certificado{background:#EAF3DE;color:#3B6D11;}
 .b-legajo{background:#FAECE7;color:#993C1D;}
@@ -259,6 +260,7 @@ const db = getFirestore(fbApp);
 const GRUPOS=['1ro 1ra','1ro 2da','2do 1ra','2do 2da','3ro 1ra','4to 1ra','5to 1ra','6to 1ra'];
 const ESTADOS=[
   {key:'ausente',label:'Falta',cls:'b-ausente',ico:'✗'},
+  {key:'ausente_aviso',label:'Falta c/aviso',cls:'b-ausente-aviso',ico:'✓✗'},
   {key:'retiro',label:'Se retiró',cls:'b-retiro',ico:'↩'},
   {key:'certificado',label:'Certificado',cls:'b-certificado',ico:'✓'},
   {key:'legajo',label:'Debe legajo',cls:'b-legajo',ico:'!'},
@@ -302,9 +304,15 @@ async function loadFromCloud(){
       const d=snap.data();
       S.alumnos=d.alumnos||[];S.registros=d.registros||{};
       S.notas=d.notas||{};
-      // Siempre usar el array más largo entre el guardado y el default
       const gGuardados=d.grupos&&d.grupos.length?d.grupos:[];
       S.grupos=gGuardados.length>=GRUPOS.length?gGuardados:GRUPOS.slice();
+      // Si los nombres guardados no coinciden con los nuevos, forzar actualización
+      const nombresViejos=gGuardados.join(',');
+      const nombresNuevos=GRUPOS.join(',');
+      if(nombresViejos!==nombresNuevos){
+        S.grupos=GRUPOS.slice();
+        saveToCloud();
+      }
     }
     setSyncStatus('ok');
   }catch(e){setSyncStatus('error');}
@@ -507,9 +515,9 @@ function alumnoAsistRow(a,fecha){
 
 function renderAsist(){
   const alumnos=getAlumnos();const fecha=S.fecha;
-  const stats={ausente:0,retiro:0,certificado:0,legajo:0,tarde:0};
+  const stats={ausente:0,ausente_aviso:0,retiro:0,certificado:0,legajo:0,tarde:0};
   alumnos.forEach(a=>{const e=getEsts(a.id,fecha);ESTADOS.forEach(est=>{if(e.includes(est.key))stats[est.key]++;});});
-  const colores=['#c0392b','#854F0B','#3B6D11','#993C1D','#185FA5'];
+  const colores=['#c0392b','#72243E','#854F0B','#3B6D11','#993C1D','#185FA5'];
   document.getElementById('stats-row').innerHTML=ESTADOS.map((e,i)=>`<div class="stat-card"><div class="stat-num" style="color:${colores[i]}">${stats[e.key]}</div><div class="stat-lbl">${e.label}</div></div>`).join('');
   const cont=document.getElementById('lista-asist');
   if(!alumnos.length){cont.innerHTML='<div class="empty">No hay alumnos cargados.<br>Andá a la pestaña <b>Alumnos</b> para agregar.</div>';return;}
@@ -587,7 +595,7 @@ window._abrirPerfil=function(id){
   avEl.textContent=ini;avEl.className='perfil-avatar av'+(gidx>=0&&gidx<=7?gidx:0);
   document.getElementById('p-nombre').textContent=a.nombre;
   document.getElementById('p-grupo').textContent=(a.grupo||'')+(a.tutor?' · Tutor: '+a.tutor:'');
-  const counts={ausente:0,retiro:0,certificado:0,legajo:0,tarde:0};
+  const counts={ausente:0,ausente_aviso:0,retiro:0,certificado:0,legajo:0,tarde:0};
   const histFechas=[];
   Object.entries(S.registros).forEach(([k,v])=>{
     if(!k.includes('_'+id)||!v||!v.length)return;
@@ -598,15 +606,15 @@ window._abrirPerfil=function(id){
   const statsHtml=`
     <div class="perfil-stats">
       <div class="perfil-stat"><div class="perfil-stat-num" style="color:#c0392b">${counts.ausente}</div><div class="perfil-stat-lbl">Faltas</div></div>
+      <div class="perfil-stat"><div class="perfil-stat-num" style="color:#72243E">${counts.ausente_aviso}</div><div class="perfil-stat-lbl">Faltas c/aviso</div></div>
       <div class="perfil-stat"><div class="perfil-stat-num" style="color:#854F0B">${counts.retiro}</div><div class="perfil-stat-lbl">Retiros</div></div>
       <div class="perfil-stat"><div class="perfil-stat-num" style="color:#185FA5">${counts.tarde}</div><div class="perfil-stat-lbl">Tardanzas</div></div>
       <div class="perfil-stat"><div class="perfil-stat-num" style="color:#3B6D11">${counts.certificado}</div><div class="perfil-stat-lbl">Certificados</div></div>
       <div class="perfil-stat"><div class="perfil-stat-num" style="color:#993C1D">${counts.legajo}</div><div class="perfil-stat-lbl">Legajos</div></div>
-      <div class="perfil-stat"><div class="perfil-stat-num">${histFechas.length}</div><div class="perfil-stat-lbl">Días con registro</div></div>
     </div>
     <div style="background:#FCEBEB;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
-      <span style="font-size:22px;font-weight:700;color:#c0392b;">${counts.ausente}</span>
-      <span style="font-size:13px;color:#A32D2D;">inasistencias totales en el año</span>
+      <span style="font-size:22px;font-weight:700;color:#c0392b;">${counts.ausente+counts.ausente_aviso}</span>
+      <span style="font-size:13px;color:#A32D2D;">inasistencias totales en el año (${counts.ausente} sin aviso · ${counts.ausente_aviso} con aviso)</span>
     </div>`;
   const histHtml=histFechas.length?histFechas.map(({fecha,estados})=>{
     const dl=new Date(fecha+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
